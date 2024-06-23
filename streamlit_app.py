@@ -61,7 +61,26 @@ st.title('Analisis Sentimen Komentar Media Sosial')
 
 with st.form(key='search_form'):
     keyword = st.text_input("Masukkan keyword untuk pencarian:")
-    submit_button = st.form_submit_button(label='Submit')
+    submit_button = st.form_submit_button(label='Proses')
+
+    # Menggunakan HTML dan CSS untuk tombol Bootstrap
+    st.markdown("""
+        <style>
+            .stButton>button {
+                background-color: #007bff;
+                color: white;
+                border-radius: 5px;
+                border: none;
+                padding: 10px 20px;
+                font-size: 16px;
+                cursor: pointer;
+            }
+            .stButton>button:hover {
+                background-color: #0056b3;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+    st.write('Klik tombol **Proses** untuk proses semua data')
 
 if submit_button:
     if keyword:
