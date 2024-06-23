@@ -1,64 +1,63 @@
 import streamlit as st
+import pandas as pd
+import joblib
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import SVC
-from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
-import pandas as pd
+from sklearn.metrics import classification_report
 
-# Data contoh untuk pelatihan model
-data = {
-    'text': [
-        "Saya sangat senang dengan pelayanan yang diberikan",
-        "Pelayanan yang diberikan sangat buruk",
-        "Produk ini luar biasa bagus",
-        "Saya kecewa dengan produk ini",
-        "Ini pengalaman belanja yang menyenangkan",
-        "Saya tidak puas dengan produk ini"
-    ],
-    'sentiment': [
-        'positive',
-        'negative',
-        'positive',
-        'negative',
-        'positive',
-        'negative'
-    ]
-}
-
-# Membuat DataFrame
-df = pd.DataFrame(data)
-
-# Menampilkan judul
-st.title("Analisis Sentimen Menggunakan SVM")
-
-# Menampilkan form input teks
-user_input = st.text_area("Masukkan teks untuk analisis sentimen:")
-
-# Fungsi untuk melatih model SVM
+# Fungsi untuk melatih model
+@st.cache
 def train_model():
-    X = df['text']
-    y = df['sentiment']
-    
-    # Memisahkan data menjadi data latih dan data uji
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    # Membuat pipeline dengan TfidfVectorizer dan SVM
-    model = make_pipeline(TfidfVectorizer(), SVC(kernel='linear'))
-    
-    # Melatih model
-    model.fit(X_train, y_train)
-    
-    return model
+    url = "https://raw.githubusercontent.com/rizalespe/Dataset-Sentimen-Analisis-Bahasa-Indonesia/master/dataset_tweet_sentimen_tayangan_tv.csv"
+    data = pd.read_csv(url)
+    data['label'] = data['label'].map({'positif': 1, 'negatif': 0})
 
-# Melatih model
+    X = data['tweet']
+    y = data['label']
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    pipeline = make_pipeline(TfidfVectorizer(), SVC(kernel='linear'))
+    pipeline.fit(X_train, y_train)
+
+    y_pred = pipeline.predict(X_test)
+    print(classification_report(y_test, y_pred))
+
+    return pipeline
+
+# Memuat model yang sudah dilatih atau melatih model baru
 model = train_model()
 
-# Jika ada teks yang dimasukkan oleh pengguna
-if user_input:
-    # Memprediksi sentimen dari teks yang dimasukkan
-    prediction = model.predict([user_input])
+st.title('Analisis Sentimen Komentar Media Sosial')
+
+# Fungsi untuk menganalisis sentimen
+def analyze_sentiment(texts):
+    sentiments = model.predict(texts)
+    return sentiments
+
+# Input dari pengguna
+uploaded_file = st.file_uploader("Upload file CSV dengan kolom 'tweet'", type="csv")
+
+if uploaded_file:
+    # Memuat data dari file yang diunggah
+    tweets_df = pd.read_csv(uploaded_file)
     
-    # Menampilkan hasil prediksi
-    st.write("Prediksi sentimen:", prediction[0])
-else:
-    st.write("Masukkan teks di atas untuk mendapatkan prediksi sentimen.")
+    # Memastikan kolom 'tweet' ada dalam data
+    if 'tweet' in tweets_df.columns:
+        # Menganalisis sentimen
+        tweets_df['sentiment'] = analyze_sentiment(tweets_df['tweet'])
+        
+        # Menampilkan hasil dalam bentuk tabel
+        st.write(tweets_df)
+        
+        # Menampilkan grafik persentase sentimen
+        sentiment_counts = tweets_df['sentiment'].value_counts(normalize=True) * 100
+        fig, ax = plt.subplots()
+        sentiment_counts.plot(kind='pie', autopct='%1.1f%%', ax=ax)
+        ax.set_ylabel('')
+        st.pyplot(fig)
+    else:
+        st.error("Kolom 'tweet' tidak ditemukan dalam file yang diunggah.")
