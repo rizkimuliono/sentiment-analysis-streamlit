@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.decomposition import PCA
 import re
 from collections import Counter
 import matplotlib.pyplot as plt
@@ -144,5 +145,17 @@ if selected_source:
                 st.pyplot(fig)
             else:
                 st.markdown('<p style="color:red; font-size: 20px;">Tidak ada kata untuk sentimen negatif</p>', unsafe_allow_html=True)
+
+            # Menampilkan grafik sebaran data titik cluster KNN
+            st.markdown("### KNN Cluster Data Points")
+            pca = PCA(n_components=2)
+            X_pca = pca.fit_transform(X.toarray())
+            plt.figure(figsize=(10, 6))
+            scatter = plt.scatter(X_pca[:, 0], X_pca[:, 1], c=[{'positive': 1, 'netral': 0, 'negative': -1}[s] for s in true_sentiments], cmap='viridis', alpha=0.5)
+            plt.colorbar(scatter, ticks=[-1, 0, 1], format=plt.FuncFormatter(lambda val, loc: ['Negative', 'Neutral', 'Positive'][loc]))
+            plt.title('KNN Cluster Data Points')
+            plt.xlabel('PCA Component 1')
+            plt.ylabel('PCA Component 2')
+            st.pyplot(plt)
         else:
             st.markdown('<p style="color:red; font-size: 20px;">Tidak ada tweet yang mengandung keyword tersebut.</p>', unsafe_allow_html=True)
