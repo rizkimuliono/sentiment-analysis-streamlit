@@ -15,11 +15,11 @@ def train_model():
     data = pd.read_csv(url)
     
     # Periksa apakah kolom 'label' ada dalam data
-    if 'label' not in data.columns:
-        st.error("Kolom 'label' tidak ditemukan dalam dataset.")
+    if 'Sentiment' not in data.columns:
+        st.error("Kolom 'Sentiment' tidak ditemukan dalam dataset.")
         return None
     
-    data['label'] = data['label'].map({'positif': 1, 'negatif': 0})
+    data['label'] = data['Sentiment'].map({'positive': 1, 'negative': 0})
     
     # Periksa apakah mapping berhasil
     if data['label'].isnull().any():
