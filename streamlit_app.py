@@ -81,10 +81,10 @@ if keyword:
 
         st.write(f"Accuracy of Sentiment Analysis: {accuracy:.2f}%")
 
-        # Menampilkan top hashtags
+        # Menampilkan top hashtags dalam bentuk tabel
         st.write("Top Hashtags:")
-        for hashtag, count in hashtag_counts:
-            st.write(f"{hashtag}: {count}")
+        hashtag_df = pd.DataFrame(hashtag_counts, columns=['Hashtag', 'Jumlah'])
+        st.dataframe(hashtag_df)
 
         # Menampilkan Word Cloud
         st.write("Word Cloud for Positive Sentiments")
