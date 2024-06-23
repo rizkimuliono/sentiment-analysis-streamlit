@@ -94,19 +94,26 @@ if submit_button:
         hashtag_df = pd.DataFrame(hashtag_counts, columns=['Hashtag', 'Jumlah'])
         st.dataframe(hashtag_df)
 
-        # Menampilkan Word Cloud
+        # Menampilkan Word Cloud untuk sentimen positif
         st.markdown("### Word Cloud for Positive Sentiments")
-        positive_wordcloud = WordCloud(width=800, height=400, background_color='white').generate(positive_comments)
-        fig, ax = plt.subplots()
-        ax.imshow(positive_wordcloud, interpolation='bilinear')
-        ax.axis('off')
-        st.pyplot(fig)
+        if positive_comments.strip():
+            positive_wordcloud = WordCloud(width=800, height=400, background_color='white').generate(positive_comments)
+            fig, ax = plt.subplots()
+            ax.imshow(positive_wordcloud, interpolation='bilinear')
+            ax.axis('off')
+            st.pyplot(fig)
+        else:
+            st.write("Tidak ada kata untuk sentimen positif")
 
+        # Menampilkan Word Cloud untuk sentimen negatif
         st.markdown("### Word Cloud for Negative Sentiments")
-        negative_wordcloud = WordCloud(width=800, height=400, background_color='white').generate(negative_comments)
-        fig, ax = plt.subplots()
-        ax.imshow(negative_wordcloud, interpolation='bilinear')
-        ax.axis('off')
-        st.pyplot(fig)
+        if negative_comments.strip():
+            negative_wordcloud = WordCloud(width=800, height=400, background_color='white').generate(negative_comments)
+            fig, ax = plt.subplots()
+            ax.imshow(negative_wordcloud, interpolation='bilinear')
+            ax.axis('off')
+            st.pyplot(fig)
+        else:
+            st.write("Tidak ada kata untuk sentimen negatif")
     else:
         st.write("Tidak ada tweet yang mengandung keyword tersebut.")
