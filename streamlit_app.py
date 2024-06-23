@@ -59,12 +59,17 @@ def analyze_sentiments(filtered_comments):
 
 st.title('Analisis Sentimen Komentar Media Sosial')
 
-# Input dari pengguna untuk keyword pencarian
-keyword = st.text_input("Masukkan keyword untuk pencarian:")
+with st.form(key='search_form'):
+    keyword = st.text_input("Masukkan keyword untuk pencarian:")
+    submit_button = st.form_submit_button(label='Submit')
 
-if keyword:
-    # Filter data berdasarkan keyword
-    filtered_comments = [comment for comment in comments if keyword.lower() in comment.lower()]
+if submit_button:
+    if keyword:
+        # Filter data berdasarkan keyword
+        filtered_comments = [comment for comment in comments if keyword.lower() in comment.lower()]
+    else:
+        # Jika input text kosong, analisis seluruh data
+        filtered_comments = comments
 
     if filtered_comments:
         sentiments, positive_percentage, neutral_percentage, negative_percentage, accuracy, hashtag_counts, positive_comments, negative_comments = analyze_sentiments(filtered_comments)
