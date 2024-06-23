@@ -103,7 +103,7 @@ if submit_button:
             ax.axis('off')
             st.pyplot(fig)
         else:
-            st.write("Tidak ada kata untuk sentimen positif")
+            st.markdown('<p style="color:red; font-size: 20px;">Tidak ada kata untuk sentimen positif</p>', unsafe_allow_html=True)
 
         # Menampilkan Word Cloud untuk sentimen negatif
         st.markdown("### Word Cloud for Negative Sentiments")
@@ -114,6 +114,6 @@ if submit_button:
             ax.axis('off')
             st.pyplot(fig)
         else:
-            st.write("Tidak ada kata untuk sentimen negatif")
+            st.markdown('<p style="color:red; font-size: 20px;">Tidak ada kata untuk sentimen negatif</p>', unsafe_allow_html=True)
     else:
-        st.write("Tidak ada tweet yang mengandung keyword tersebut.")
+        st.markdown('<p style="color:red; font-size: 20px;">Tidak ada tweet yang mengandung keyword tersebut.</p>', unsafe_allow_html=True)
