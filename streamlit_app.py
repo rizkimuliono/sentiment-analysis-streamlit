@@ -70,31 +70,34 @@ if keyword:
         sentiments, positive_percentage, neutral_percentage, negative_percentage, accuracy, hashtag_counts, positive_comments, negative_comments = analyze_sentiments(filtered_comments)
 
         # Menampilkan hasil dalam bentuk tabel
+        st.markdown("### Comments and Sentiments")
         st.write(pd.DataFrame({'Comment': filtered_comments, 'Sentiment': sentiments}))
 
         # Menampilkan grafik persentase sentimen
+        st.markdown("### Sentiment Distribution")
         fig, ax = plt.subplots()
         ax.pie([positive_percentage, neutral_percentage, negative_percentage], labels=['Positive', 'Neutral', 'Negative'],
                autopct='%1.1f%%', colors=['#4CAF50', '#FFC107', '#F44336'])
         ax.set_title('Sentiment Distribution')
         st.pyplot(fig)
 
-        st.write(f"Accuracy of Sentiment Analysis: {accuracy:.2f}%")
+        st.markdown("### Accuracy")
+        st.write(f"Accuracy of Sentiment Analysis: **{accuracy:.2f}%**")
 
         # Menampilkan top hashtags dalam bentuk tabel
-        st.write("Top Hashtags:")
+        st.markdown("### Top Hashtags")
         hashtag_df = pd.DataFrame(hashtag_counts, columns=['Hashtag', 'Jumlah'])
         st.dataframe(hashtag_df)
 
         # Menampilkan Word Cloud
-        st.write("Word Cloud for Positive Sentiments")
+        st.markdown("### Word Cloud for Positive Sentiments")
         positive_wordcloud = WordCloud(width=800, height=400, background_color='white').generate(positive_comments)
         fig, ax = plt.subplots()
         ax.imshow(positive_wordcloud, interpolation='bilinear')
         ax.axis('off')
         st.pyplot(fig)
 
-        st.write("Word Cloud for Negative Sentiments")
+        st.markdown("### Word Cloud for Negative Sentiments")
         negative_wordcloud = WordCloud(width=800, height=400, background_color='white').generate(negative_comments)
         fig, ax = plt.subplots()
         ax.imshow(negative_wordcloud, interpolation='bilinear')
