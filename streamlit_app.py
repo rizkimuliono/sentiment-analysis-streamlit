@@ -80,7 +80,7 @@ with st.form(key='search_form'):
             }
         </style>
     """, unsafe_allow_html=True)
-    st.write('Klik tombol **Proses** untuk proses semua data')
+    st.write('untuk proses semua data, kosongkan input text pencarian dan klik tombol **Proses**')
 
 if submit_button:
     if keyword:
