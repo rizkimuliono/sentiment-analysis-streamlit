@@ -1,84 +1,85 @@
 import streamlit as st
 import pandas as pd
-import joblib
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
+import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.svm import SVC
-from sklearn.pipeline import make_pipeline
-from sklearn.metrics import classification_report
+from sklearn.neighbors import KNeighborsClassifier
+import re
+from collections import Counter
+import matplotlib.pyplot as plt
 
-# Fungsi untuk melatih model
-@st.cache
-def train_model():
-    url = "https://raw.githubusercontent.com/rizalespe/Dataset-Sentimen-Analisis-Bahasa-Indonesia/master/dataset_tweet_sentimen_tayangan_tv.csv"
-    data = pd.read_csv(url)
-    
-    # Periksa apakah kolom 'Sentiment' ada dalam data
-    if 'Sentiment' not in data.columns or 'Text Tweet' not in data.columns:
-        st.error("Kolom 'Sentiment' atau 'Text Tweet' tidak ditemukan dalam dataset.")
-        return None
-    
-    data['label'] = data['Sentiment'].map({'positive': 1, 'negative': 0})
-    
-    # Periksa apakah mapping berhasil
-    if data['label'].isnull().any():
-        st.error("Nilai label tidak dapat dimapping dengan benar.")
-        return None
+# Baca dataset dari URL
+url = "https://raw.githubusercontent.com/rizalespe/Dataset-Sentimen-Analisis-Bahasa-Indonesia/master/dataset_tweet_sentimen_tayangan_tv.csv"
+df = pd.read_csv(url)
 
-    X = data['Text Tweet']
-    y = data['label']
+# Menghapus baris yang memiliki nilai kosong
+df = df.dropna()
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Pisahkan komentar dan labelnya
+comments = df['Text Tweet'].tolist()
+true_sentiments = df['Sentiment'].tolist()
 
-    pipeline = make_pipeline(TfidfVectorizer(), SVC(kernel='linear'))
-    pipeline.fit(X_train, y_train)
+# TfidfVectorizer
+vectorizer = TfidfVectorizer()
 
-    y_pred = pipeline.predict(X_test)
-    print(classification_report(y_test, y_pred))
+# Transform data
+X = vectorizer.fit_transform(comments)
 
-    return pipeline
+# KNN Classifier
+knn = KNeighborsClassifier(n_neighbors=3)
+knn.fit(X, true_sentiments)
 
-# Memuat model yang sudah dilatih atau melatih model baru
-model = train_model()
+def extract_hashtags(comments):
+    hashtags = []
+    for comment in comments:
+        hashtags.extend(re.findall(r'#\w+', comment))
+    return hashtags
 
-if model is not None:
-    st.title('Analisis Sentimen Komentar Media Sosial')
+def analyze_sentiments(filtered_comments):
+    filtered_X = vectorizer.transform(filtered_comments)
+    sentiments = knn.predict(filtered_X)
 
-    # Fungsi untuk menganalisis sentimen
-    def analyze_sentiment(texts):
-        sentiments = model.predict(texts)
-        return sentiments
+    total_comments = len(filtered_comments)
+    positive_percentage = (list(sentiments).count('positive') / total_comments) * 100 if total_comments > 0 else 0
+    neutral_percentage = (list(sentiments).count('netral') / total_comments) * 100 if total_comments > 0 else 0
+    negative_percentage = (list(sentiments).count('negative') / total_comments) * 100 if total_comments > 0 else 0
 
-    # Input dari pengguna untuk keyword pencarian
-    keyword = st.text_input("Masukkan keyword untuk pencarian:")
+    filtered_true_sentiments = [true_sentiments[i] for i, comment in enumerate(comments) if comment in filtered_comments]
 
-    if keyword:
-        # Memuat data dari URL
-        url = "https://raw.githubusercontent.com/rizalespe/Dataset-Sentimen-Analisis-Bahasa-Indonesia/master/dataset_tweet_sentimen_tayangan_tv.csv"
-        tweets_df = pd.read_csv(url)
-        
-        # Memastikan kolom 'Text Tweet' ada dalam data
-        if 'Text Tweet' in tweets_df.columns:
-            # Filter data berdasarkan keyword
-            filtered_df = tweets_df[tweets_df['Text Tweet'].str.contains(keyword, case=False, na=False)]
-            
-            if not filtered_df.empty:
-                # Menganalisis sentimen
-                filtered_df['Sentiment'] = analyze_sentiment(filtered_df['Text Tweet'])
-                
-                # Menampilkan hasil dalam bentuk tabel
-                st.write(filtered_df)
-                
-                # Menampilkan grafik persentase sentimen
-                sentiment_counts = filtered_df['Sentiment'].value_counts(normalize=True) * 100
-                fig, ax = plt.subplots()
-                sentiment_counts.plot(kind='pie', autopct='%1.1f%%', ax=ax)
-                ax.set_ylabel('')
-                st.pyplot(fig)
-            else:
-                st.write("Tidak ada tweet yang mengandung keyword tersebut.")
-        else:
-            st.error("Kolom 'Text Tweet' tidak ditemukan dalam data.")
-else:
-    st.error("Gagal memuat model. Periksa kembali data dan coba lagi.")
+    correct_predictions = sum(1 for pred, true in zip(sentiments, filtered_true_sentiments) if pred == true) if total_comments > 0 else 0
+    accuracy = (correct_predictions / len(sentiments) * 100) if total_comments > 0 else 0
+
+    hashtags = extract_hashtags(filtered_comments)
+    hashtag_counts = Counter(hashtags).most_common()
+
+    return sentiments, positive_percentage, neutral_percentage, negative_percentage, accuracy, hashtag_counts
+
+st.title('Analisis Sentimen Komentar Media Sosial')
+
+# Input dari pengguna untuk keyword pencarian
+keyword = st.text_input("Masukkan keyword untuk pencarian:")
+
+if keyword:
+    # Filter data berdasarkan keyword
+    filtered_comments = [comment for comment in comments if keyword.lower() in comment.lower()]
+
+    if filtered_comments:
+        sentiments, positive_percentage, neutral_percentage, negative_percentage, accuracy, hashtag_counts = analyze_sentiments(filtered_comments)
+
+        # Menampilkan hasil dalam bentuk tabel
+        st.write(pd.DataFrame({'Comment': filtered_comments, 'Sentiment': sentiments}))
+
+        # Menampilkan grafik persentase sentimen
+        fig, ax = plt.subplots()
+        ax.pie([positive_percentage, neutral_percentage, negative_percentage], labels=['Positive', 'Neutral', 'Negative'],
+               autopct='%1.1f%%', colors=['#4CAF50', '#FFC107', '#F44336'])
+        ax.set_title('Sentiment Distribution')
+        st.pyplot(fig)
+
+        st.write(f"Accuracy of Sentiment Analysis: {accuracy:.2f}%")
+
+        # Menampilkan top hashtags
+        st.write("Top Hashtags:")
+        for hashtag, count in hashtag_counts:
+            st.write(f"{hashtag}: {count}")
+    else:
+        st.write("Tidak ada tweet yang mengandung keyword tersebut.")
