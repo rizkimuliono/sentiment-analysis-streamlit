@@ -14,9 +14,9 @@ def train_model():
     url = "https://raw.githubusercontent.com/rizalespe/Dataset-Sentimen-Analisis-Bahasa-Indonesia/master/dataset_tweet_sentimen_tayangan_tv.csv"
     data = pd.read_csv(url)
     
-    # Periksa apakah kolom 'label' ada dalam data
-    if 'Sentiment' not in data.columns:
-        st.error("Kolom 'Sentiment' tidak ditemukan dalam dataset.")
+    # Periksa apakah kolom 'Sentiment' ada dalam data
+    if 'Sentiment' not in data.columns or 'Text Tweet' not in data.columns:
+        st.error("Kolom 'Sentiment' atau 'Text Tweet' tidak ditemukan dalam dataset.")
         return None
     
     data['label'] = data['Sentiment'].map({'positive': 1, 'negative': 0})
@@ -50,28 +50,35 @@ if model is not None:
         sentiments = model.predict(texts)
         return sentiments
 
-    # Input dari pengguna
-    uploaded_file = st.file_uploader("Upload file CSV dengan kolom 'tweet'", type="csv")
+    # Input dari pengguna untuk keyword pencarian
+    keyword = st.text_input("Masukkan keyword untuk pencarian:")
 
-    if uploaded_file:
-        # Memuat data dari file yang diunggah
-        tweets_df = pd.read_csv(uploaded_file)
+    if keyword:
+        # Memuat data dari URL
+        url = "https://raw.githubusercontent.com/rizalespe/Dataset-Sentimen-Analisis-Bahasa-Indonesia/master/dataset_tweet_sentimen_tayangan_tv.csv"
+        tweets_df = pd.read_csv(url)
         
-        # Memastikan kolom 'tweet' ada dalam data
+        # Memastikan kolom 'Text Tweet' ada dalam data
         if 'Text Tweet' in tweets_df.columns:
-            # Menganalisis sentimen
-            tweets_df['Sentiment'] = analyze_sentiment(tweets_df['Text Tweet'])
+            # Filter data berdasarkan keyword
+            filtered_df = tweets_df[tweets_df['Text Tweet'].str.contains(keyword, case=False, na=False)]
             
-            # Menampilkan hasil dalam bentuk tabel
-            st.write(tweets_df)
-            
-            # Menampilkan grafik persentase sentimen
-            sentiment_counts = tweets_df['Sentiment'].value_counts(normalize=True) * 100
-            fig, ax = plt.subplots()
-            sentiment_counts.plot(kind='pie', autopct='%1.1f%%', ax=ax)
-            ax.set_ylabel('')
-            st.pyplot(fig)
+            if not filtered_df.empty:
+                # Menganalisis sentimen
+                filtered_df['Sentiment'] = analyze_sentiment(filtered_df['Text Tweet'])
+                
+                # Menampilkan hasil dalam bentuk tabel
+                st.write(filtered_df)
+                
+                # Menampilkan grafik persentase sentimen
+                sentiment_counts = filtered_df['Sentiment'].value_counts(normalize=True) * 100
+                fig, ax = plt.subplots()
+                sentiment_counts.plot(kind='pie', autopct='%1.1f%%', ax=ax)
+                ax.set_ylabel('')
+                st.pyplot(fig)
+            else:
+                st.write("Tidak ada tweet yang mengandung keyword tersebut.")
         else:
-            st.error("Kolom 'tweet' tidak ditemukan dalam file yang diunggah.")
+            st.error("Kolom 'Text Tweet' tidak ditemukan dalam data.")
 else:
     st.error("Gagal memuat model. Periksa kembali data dan coba lagi.")
