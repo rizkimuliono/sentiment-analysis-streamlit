@@ -13,7 +13,18 @@ from sklearn.metrics import classification_report
 def train_model():
     url = "https://raw.githubusercontent.com/rizalespe/Dataset-Sentimen-Analisis-Bahasa-Indonesia/master/dataset_tweet_sentimen_tayangan_tv.csv"
     data = pd.read_csv(url)
+    
+    # Periksa apakah kolom 'label' ada dalam data
+    if 'label' not in data.columns:
+        st.error("Kolom 'label' tidak ditemukan dalam dataset.")
+        return None
+    
     data['label'] = data['label'].map({'positif': 1, 'negatif': 0})
+    
+    # Periksa apakah mapping berhasil
+    if data['label'].isnull().any():
+        st.error("Nilai label tidak dapat dimapping dengan benar.")
+        return None
 
     X = data['tweet']
     y = data['label']
@@ -31,33 +42,36 @@ def train_model():
 # Memuat model yang sudah dilatih atau melatih model baru
 model = train_model()
 
-st.title('Analisis Sentimen Komentar Media Sosial')
+if model is not None:
+    st.title('Analisis Sentimen Komentar Media Sosial')
 
-# Fungsi untuk menganalisis sentimen
-def analyze_sentiment(texts):
-    sentiments = model.predict(texts)
-    return sentiments
+    # Fungsi untuk menganalisis sentimen
+    def analyze_sentiment(texts):
+        sentiments = model.predict(texts)
+        return sentiments
 
-# Input dari pengguna
-uploaded_file = st.file_uploader("Upload file CSV dengan kolom 'tweet'", type="csv")
+    # Input dari pengguna
+    uploaded_file = st.file_uploader("Upload file CSV dengan kolom 'tweet'", type="csv")
 
-if uploaded_file:
-    # Memuat data dari file yang diunggah
-    tweets_df = pd.read_csv(uploaded_file)
-    
-    # Memastikan kolom 'tweet' ada dalam data
-    if 'tweet' in tweets_df.columns:
-        # Menganalisis sentimen
-        tweets_df['sentiment'] = analyze_sentiment(tweets_df['tweet'])
+    if uploaded_file:
+        # Memuat data dari file yang diunggah
+        tweets_df = pd.read_csv(uploaded_file)
         
-        # Menampilkan hasil dalam bentuk tabel
-        st.write(tweets_df)
-        
-        # Menampilkan grafik persentase sentimen
-        sentiment_counts = tweets_df['sentiment'].value_counts(normalize=True) * 100
-        fig, ax = plt.subplots()
-        sentiment_counts.plot(kind='pie', autopct='%1.1f%%', ax=ax)
-        ax.set_ylabel('')
-        st.pyplot(fig)
-    else:
-        st.error("Kolom 'tweet' tidak ditemukan dalam file yang diunggah.")
+        # Memastikan kolom 'tweet' ada dalam data
+        if 'tweet' in tweets_df.columns:
+            # Menganalisis sentimen
+            tweets_df['sentiment'] = analyze_sentiment(tweets_df['tweet'])
+            
+            # Menampilkan hasil dalam bentuk tabel
+            st.write(tweets_df)
+            
+            # Menampilkan grafik persentase sentimen
+            sentiment_counts = tweets_df['sentiment'].value_counts(normalize=True) * 100
+            fig, ax = plt.subplots()
+            sentiment_counts.plot(kind='pie', autopct='%1.1f%%', ax=ax)
+            ax.set_ylabel('')
+            st.pyplot(fig)
+        else:
+            st.error("Kolom 'tweet' tidak ditemukan dalam file yang diunggah.")
+else:
+    st.error("Gagal memuat model. Periksa kembali data dan coba lagi.")
