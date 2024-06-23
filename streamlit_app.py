@@ -58,15 +58,15 @@ if model is not None:
         tweets_df = pd.read_csv(uploaded_file)
         
         # Memastikan kolom 'tweet' ada dalam data
-        if 'tweet' in tweets_df.columns:
+        if 'Text Tweet' in tweets_df.columns:
             # Menganalisis sentimen
-            tweets_df['sentiment'] = analyze_sentiment(tweets_df['tweet'])
+            tweets_df['Sentiment'] = analyze_sentiment(tweets_df['Text Tweet'])
             
             # Menampilkan hasil dalam bentuk tabel
             st.write(tweets_df)
             
             # Menampilkan grafik persentase sentimen
-            sentiment_counts = tweets_df['sentiment'].value_counts(normalize=True) * 100
+            sentiment_counts = tweets_df['Sentiment'].value_counts(normalize=True) * 100
             fig, ax = plt.subplots()
             sentiment_counts.plot(kind='pie', autopct='%1.1f%%', ax=ax)
             ax.set_ylabel('')
