@@ -4,10 +4,12 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.decomposition import PCA
+from sklearn.metrics import confusion_matrix
 import re
 from collections import Counter
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
+import seaborn as sns
 
 # Daftar sumber data
 data_sources = {
@@ -69,7 +71,10 @@ if selected_source:
         positive_comments = " ".join([comment for comment, sentiment in zip(filtered_comments, sentiments) if sentiment == 'positive'])
         negative_comments = " ".join([comment for comment, sentiment in zip(filtered_comments, sentiments) if sentiment == 'negative'])
 
-        return sentiments, positive_percentage, neutral_percentage, negative_percentage, accuracy, hashtag_counts, positive_comments, negative_comments
+        # Confusion Matrix
+        conf_matrix = confusion_matrix(filtered_true_sentiments, sentiments, labels=['positive', 'netral', 'negative'])
+
+        return sentiments, positive_percentage, neutral_percentage, negative_percentage, accuracy, hashtag_counts, positive_comments, negative_comments, conf_matrix
 
     with st.form(key='search_form'):
         keyword = st.text_input("Masukkan keyword untuk pencarian:")
@@ -102,7 +107,7 @@ if selected_source:
             filtered_comments = comments
 
         if filtered_comments:
-            sentiments, positive_percentage, neutral_percentage, negative_percentage, accuracy, hashtag_counts, positive_comments, negative_comments = analyze_sentiments(filtered_comments)
+            sentiments, positive_percentage, neutral_percentage, negative_percentage, accuracy, hashtag_counts, positive_comments, negative_comments, conf_matrix = analyze_sentiments(filtered_comments)
 
             # Menampilkan hasil dalam bentuk tabel
             st.markdown("### Comments and Sentiments")
@@ -118,6 +123,14 @@ if selected_source:
 
             st.markdown("### Accuracy")
             st.write(f"Accuracy of Sentiment Analysis: **{accuracy:.2f}%**")
+
+            # Menampilkan confusion matrix
+            st.markdown("### Confusion Matrix")
+            fig, ax = plt.subplots()
+            sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=['Positive', 'Neutral', 'Negative'], yticklabels=['Positive', 'Neutral', 'Negative'])
+            ax.set_xlabel('Predicted')
+            ax.set_ylabel('Actual')
+            st.pyplot(fig)
 
             # Menampilkan top hashtags dalam bentuk tabel
             st.markdown("### Top Hashtags")
@@ -159,3 +172,4 @@ if selected_source:
             st.pyplot(plt)
         else:
             st.markdown('<p style="color:red; font-size: 20px;">Tidak ada tweet yang mengandung keyword tersebut.</p>', unsafe_allow_html=True)
+            
