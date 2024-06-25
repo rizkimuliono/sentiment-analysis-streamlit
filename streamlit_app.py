@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.decomposition import PCA
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, classification_report
 import re
 from collections import Counter
 import matplotlib.pyplot as plt
@@ -74,7 +74,16 @@ if selected_source:
         # Confusion Matrix
         conf_matrix = confusion_matrix(filtered_true_sentiments, sentiments, labels=['positive', 'netral', 'negative'])
 
-        return sentiments, positive_percentage, neutral_percentage, negative_percentage, accuracy, hashtag_counts, positive_comments, negative_comments, conf_matrix
+        # Classification Report
+        class_report = classification_report(filtered_true_sentiments, sentiments, output_dict=True, zero_division=0)
+        metrics = {
+            "Accuracy": [accuracy],
+            "Precision": [class_report['macro avg']['precision']],
+            "Recall": [class_report['macro avg']['recall']],
+            "F1-Score": [class_report['macro avg']['f1-score']]
+        }
+
+        return sentiments, positive_percentage, neutral_percentage, negative_percentage, accuracy, hashtag_counts, positive_comments, negative_comments, conf_matrix, metrics
 
     with st.form(key='search_form'):
         keyword = st.text_input("Masukkan keyword untuk pencarian:")
@@ -107,7 +116,7 @@ if selected_source:
             filtered_comments = comments
 
         if filtered_comments:
-            sentiments, positive_percentage, neutral_percentage, negative_percentage, accuracy, hashtag_counts, positive_comments, negative_comments, conf_matrix = analyze_sentiments(filtered_comments)
+            sentiments, positive_percentage, neutral_percentage, negative_percentage, accuracy, hashtag_counts, positive_comments, negative_comments, conf_matrix, metrics = analyze_sentiments(filtered_comments)
 
             # Menampilkan hasil dalam bentuk tabel
             st.markdown("### Comments and Sentiments")
@@ -131,6 +140,11 @@ if selected_source:
             ax.set_xlabel('Predicted')
             ax.set_ylabel('Actual')
             st.pyplot(fig)
+
+            # Menampilkan metrik dalam bentuk tabel
+            st.markdown("### Evaluation Metrics")
+            metrics_df = pd.DataFrame(metrics)
+            st.dataframe(metrics_df)
 
             # Menampilkan top hashtags dalam bentuk tabel
             st.markdown("### Top Hashtags")
@@ -172,4 +186,3 @@ if selected_source:
             st.pyplot(plt)
         else:
             st.markdown('<p style="color:red; font-size: 20px;">Tidak ada tweet yang mengandung keyword tersebut.</p>', unsafe_allow_html=True)
-            
